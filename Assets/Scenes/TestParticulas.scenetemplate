@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 13966, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: TestParticulas
+  m_EditorClassIdentifier: 
+  templateScene: {fileID: 102900000, guid: a9ed83ab488bfea4db0f71624152494e, type: 3}
+  templateName: 
+  description: 
+  preview: {fileID: 0}
+  dependencies:
+  - dependency: {fileID: 2800000, guid: 3a35d98f838f48342ab0be991e2693ca, type: 3}
+    instantiationMode: 0
+  - dependency: {fileID: 6860615228821014555, guid: be65d1e54bf8c554c94f21957dee2797, type: 3}
+    instantiationMode: 0
+  - dependency: {fileID: 2100000, guid: e813ec996ef7c6e499cd6cc263c86dda, type: 2}
+    instantiationMode: 0
+  - dependency: {fileID: 8300000, guid: bf7a3161fe44c42469f08762346ed300, type: 3}
+    instantiationMode: 1
+  - dependency: {fileID: 2100000, guid: e823cd5b5d27c0f4b8256e7c12ee3e6d, type: 2}
+    instantiationMode: 0
+  - dependency: {fileID: 2100000, guid: 8f03a31509de0fa48bebc0c0070a32c2, type: 2}
+    instantiationMode: 0
+  - dependency: {fileID: 2800000, guid: 4a0d26670d71a3243b92e2118fb398eb, type: 3}
+    instantiationMode: 0
+  templatePipeline: {fileID: 0}
+  badge: {fileID: 0}
+  addToDefaults: 0
