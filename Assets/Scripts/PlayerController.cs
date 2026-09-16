@@ -2,50 +2,76 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
-   
+    [Header("Velocidad de Movimiento")]
     public float walkSpeed = 5f; 
     public float runSpeed = 8f; 
     public float jumpForce = 7f; 
 
-    // Referencias
+    [Header("Referencias")]
+    [Tooltip("Asigna la Cámara Principal aquí. Si se deja nulo, se asignará automática en Start.")]
     public Transform cameraFollowTarget; 
+    
     private Rigidbody rb;
+    private Animator anim;
     private bool isGrounded;
 
-    
-    private Animator anim; 
+    // Almacenamiento de entrada
+    private Vector2 inputVector;
+    private bool isRunning;
 
-    
-    void Start()
+    private void Start()
     {
         rb = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>(); 
+
+        // Respaldo de seguridad para evitar congelamientos por referencias nulas
+        if (cameraFollowTarget == null && Camera.main != null)
+        {
+            cameraFollowTarget = Camera.main.transform;
+        }
     }
 
-    
-    void Update()
+    private void Update()
     {
-        HandleMovement(); 
+        // 1. Capturar entradas en Update
+        inputVector.x = Input.GetAxisRaw("Horizontal");
+        inputVector.y = Input.GetAxisRaw("Vertical");
+        isRunning = Input.GetKey(KeyCode.LeftShift);
+
         HandleJump();
         UpdateAnimations(); 
     }
-    void HandleMovement()
+
+    private void FixedUpdate()
     {
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
-
-        
-        Vector3 moveDir = cameraFollowTarget.forward * moveZ + cameraFollowTarget.right * moveX;
-        moveDir.y = 0;
-
-      
-        float speed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
-        rb.velocity = new Vector3(moveDir.x * speed, rb.velocity.y, moveDir.z * speed);
+        // 2. Aplicar movimiento físico dentro de FixedUpdate
+        HandleMovement();
     }
 
-    void HandleJump()
+    private void HandleMovement()
+    {
+        if (cameraFollowTarget == null) return;
+
+        // Obtener direcciones de la cámara proyectadas en el plano horizontal (Eje Y = 0)
+        Vector3 camForward = Vector3.Scale(cameraFollowTarget.forward, new Vector3(1, 0, 1)).normalized;
+        Vector3 camRight = Vector3.Scale(cameraFollowTarget.right, new Vector3(1, 0, 1)).normalized;
+
+        // Dirección de movimiento calculada en base a la vista de la cámara
+        Vector3 moveDir = (camForward * inputVector.y + camRight * inputVector.x).normalized;
+
+        float targetSpeed = isRunning ? runSpeed : walkSpeed;
+
+        // Aplicar la velocidad al Rigidbody (respetando la velocidad vertical del salto/gravedad)
+        Vector3 velocity = moveDir * targetSpeed;
+        
+        // Usar linearVelocity en Unity reciente o velocity en versiones anteriores
+        rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
+    }
+
+    private void HandleJump()
     {
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
@@ -54,20 +80,30 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void OnCollisionEnter(Collision collision)
+    private void OnCollisionStay(Collision collision)
     {
+        // OnCollisionStay es más estable que OnCollisionEnter para detectar el suelo
         if (collision.gameObject.CompareTag("Ground"))
+        {
             isGrounded = true;
+        }
     }
 
-    void UpdateAnimations()
+    private void OnCollisionExit(Collision collision)
     {
-        bool isMoving = Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0;
-        anim.SetBool("isWalking", isMoving);
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = false;
+        }
+    }
 
+    private void UpdateAnimations()
+    {
+        if (anim == null) return;
+
+        bool isMoving = inputVector.sqrMagnitude > 0.01f;
+        anim.SetBool("isWalking", isMoving);
         anim.SetBool("isJumping", !isGrounded);
-        
-        
     }
 }
 

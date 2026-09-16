@@ -4,37 +4,61 @@ using UnityEngine;
 
 public class PlayerShooting : MonoBehaviour
 {
-    public GameObject bulletPrefab;
-    public Transform firePoint; // Objeto hijo del Player que marca el origen del disparo
-    public float bulletSpeed = 15f;
+       
+        public GameObject bulletPrefab;
+        public Transform firePoint;
+        public Camera playerCamera;
 
-    public Camera PlayerCamera; //la camara se va a arrastrar hasta aca
+        
+        public float bulletSpeed = 25f;
+        public float destroyTime = 3f;
 
-    void Update()
-    {
-        if (Input.GetMouseButtonDown(0)) // Click izquierdo
+        // inmunidad al jugador a sus propios disparos
+        public LayerMask ignoreLayers;
+
+        private void Start()
         {
-            Shoot();
+            if (playerCamera == null) playerCamera = Camera.main;
+        }
+
+        private void Update()
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                Shoot();
+            }
+        }
+
+        private void Shoot()
+        {
+            if (bulletPrefab == null || firePoint == null || playerCamera == null) return;
+
+            // (mirilla TPS)
+            Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            Vector3 targetPoint;
+
+            // ignorar al jugador
+            if (Physics.Raycast(ray, out RaycastHit hit, 1000f, ~ignoreLayers))
+            {
+                targetPoint = hit.point;
+            }
+            else
+            {
+                targetPoint = ray.GetPoint(1000f);
+            }
+
+            //  Dirección 
+            Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
+
+            // Instanciar y aplicar velocidad
+            Quaternion bulletRotation = Quaternion.LookRotation(shootDirection);
+            GameObject bullet = Instantiate(bulletPrefab, firePoint.position, bulletRotation);
+
+            if (bullet.TryGetComponent<Rigidbody>(out Rigidbody rb))
+            {
+                rb.velocity = shootDirection * bulletSpeed;
+            }
+
+            Destroy(bullet, destroyTime);
         }
     }
-
-    void Shoot()
-    {
-        Ray ray = PlayerCamera.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        Vector3 shootDirection;
-
-        if (Physics.Raycast(ray, out hit, 100f))
-        {
-            shootDirection = (hit.point - firePoint.position).normalized;
-        }
-        else
-        {
-            shootDirection = PlayerCamera.transform.forward;
-        }
-
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-        bullet.GetComponent<Rigidbody>().velocity = firePoint.forward * bulletSpeed;
-        Destroy(bullet, 3f); // Destruye el proyectil después de 3 segundos
-    }
-}

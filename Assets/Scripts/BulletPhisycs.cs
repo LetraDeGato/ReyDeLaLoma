@@ -19,7 +19,7 @@ public class BulletPhisycs : MonoBehaviour
     }
     void Update()
     {
-        // Mueve la bala en la dirección establecida
+        // Mueve la bala 
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
     }
     void OnTriggerEnter(Collider other)
@@ -29,10 +29,10 @@ public class BulletPhisycs : MonoBehaviour
             Enemy enemy = other.GetComponent<Enemy>();
             if (enemy != null)
             {
-                enemy.TakeDamage(1); // Asegúrate de pasar 1 de daño
+                enemy.TakeDamage(1); 
                 Debug.Log("Disparo impactó al enemigo");
             }
-            Destroy(gameObject); // Destruye la bala
+            Destroy(gameObject); 
         }
     }
    // cambio

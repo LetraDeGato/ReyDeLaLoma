@@ -15,8 +15,10 @@ public class BarraDeVidaUI : MonoBehaviour
     {
         vidaJugador = FindFirstObjectByType<Stats>();
 
+        
         vidaJugador.PlayerTakeDmg += CambiarBarraDeVida;
 
+        
         IniciarBarraDeVida(vidaJugador.GetVidaMaxima(), vidaJugador.GetVidaActual());
     }
 
@@ -30,6 +32,7 @@ public class BarraDeVidaUI : MonoBehaviour
         sliderBarraDeVida.maxValue = vidaMax;
         sliderBarraDeVida.value = vidaActual;
     }
+
     private void CambiarBarraDeVida(int vidaActual)
     {
         sliderBarraDeVida.value = vidaActual;

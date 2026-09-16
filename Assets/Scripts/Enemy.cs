@@ -34,7 +34,7 @@ public class Enemy : MonoBehaviour
     {
         Debug.Log("Enemigo eliminado");
 
-        Destroy(gameObject); // Destruye el enemigo cuando su salud llega a 0
+        Destroy(gameObject); 
     }
 }
     
