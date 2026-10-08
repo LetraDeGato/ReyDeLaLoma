@@ -6,28 +6,41 @@ public class MouseLook3D : MonoBehaviour
 {
     public float rotationSpeed = 25f; 
     public bool instantRotation = false;
-    public Camera playerCamera; 
+
+    private Transform mainCamTransform;
 
     private void Start()
     {
-        if (playerCamera == null)
+        if (Camera.main != null)
         {
-            playerCamera = Camera.main;
+            mainCamTransform = Camera.main.transform;
         }
     }
 
     private void Update()
     {
-        if (playerCamera == null) return;
+        if (mainCamTransform == null)
+        {
+            if (Camera.main != null) mainCamTransform = Camera.main.transform;
+            else return;
+        }
 
-        // Alinear 
-        Vector3 cameraForward = playerCamera.transform.forward;
+        // Obtiene la orientación horizontal de la cámara principal
+        Vector3 cameraForward = mainCamTransform.forward;
         cameraForward.y = 0; 
 
         if (cameraForward.sqrMagnitude > 0.001f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(cameraForward);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+
+            if (instantRotation)
+            {
+                transform.rotation = targetRotation;
+            }
+            else
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
         }
     }
 }

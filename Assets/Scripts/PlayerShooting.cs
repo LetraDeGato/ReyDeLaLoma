@@ -1,64 +1,102 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 
 public class PlayerShooting : MonoBehaviour
 {
-       
-        public GameObject bulletPrefab;
-        public Transform firePoint;
-        public Camera playerCamera;
+    [Header("Configuración de Disparo")]
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    public float bulletSpeed = 25f;
+    public float destroyTime = 3f;
 
-        
-        public float bulletSpeed = 25f;
-        public float destroyTime = 3f;
+    [Tooltip("Capa del Player para evitar que el raycast choque con su propio cuerpo")]
+    public LayerMask ignoreLayers;
 
-        // inmunidad al jugador a sus propios disparos
-        public LayerMask ignoreLayers;
+    [Header("Apuntado (Cámaras Cinemachine)")]
+    [Tooltip("Arrastra aquí tu VCam de exploración (Normal)")]
+    public CinemachineVirtualCamera exploreVCam;
 
-        private void Start()
+    [Tooltip("Arrastra aquí tu VCam de apuntado (Zoom)")]
+    public CinemachineVirtualCamera aimVCam;
+
+    private Camera mainCam;
+
+    private void Start()
+    {
+        // Detecta automáticamente la Main Camera del juego
+        if (Camera.main != null)
         {
-            if (playerCamera == null) playerCamera = Camera.main;
+            mainCam = Camera.main;
         }
-
-        private void Update()
+        else
         {
-            if (Input.GetMouseButtonDown(0))
-            {
-                Shoot();
-            }
+            Debug.LogError("PlayerShooting: No se encontró la Main Camera. Asegúrate de que tenga el Tag 'MainCamera'.");
         }
+    }
 
-        private void Shoot()
+    private void Update()
+    {
+        HandleAiming();
+
+        if (Input.GetMouseButtonDown(0)) // Clic izquierdo para disparar
         {
-            if (bulletPrefab == null || firePoint == null || playerCamera == null) return;
+            Shoot();
+        }
+    }
 
-            // (mirilla TPS)
-            Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            Vector3 targetPoint;
+    private void HandleAiming()
+    {
+        // Clic derecho presionado = Apuntando
+        bool isAiming = Input.GetMouseButton(1);
 
-            // ignorar al jugador
-            if (Physics.Raycast(ray, out RaycastHit hit, 1000f, ~ignoreLayers))
+        // Si asignaste ambas cámaras en el Inspector, alterna la prioridad
+        if (exploreVCam != null && aimVCam != null)
+        {
+            if (isAiming)
             {
-                targetPoint = hit.point;
+                aimVCam.Priority = 20;
+                exploreVCam.Priority = 10;
             }
             else
             {
-                targetPoint = ray.GetPoint(1000f);
+                aimVCam.Priority = 10;
+                exploreVCam.Priority = 20;
             }
-
-            //  Dirección 
-            Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
-
-            // Instanciar y aplicar velocidad
-            Quaternion bulletRotation = Quaternion.LookRotation(shootDirection);
-            GameObject bullet = Instantiate(bulletPrefab, firePoint.position, bulletRotation);
-
-            if (bullet.TryGetComponent<Rigidbody>(out Rigidbody rb))
-            {
-                rb.velocity = shootDirection * bulletSpeed;
-            }
-
-            Destroy(bullet, destroyTime);
         }
     }
+
+    private void Shoot()
+    {
+        if (bulletPrefab == null || firePoint == null) return;
+        if (mainCam == null) mainCam = Camera.main;
+        if (mainCam == null) return;
+
+        // Trazado de rayo desde el centro exacto de la pantalla (0.5, 0.5)
+        Ray ray = mainCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        Vector3 targetPoint;
+
+        if (Physics.Raycast(ray, out RaycastHit hit, 1000f, ~ignoreLayers))
+        {
+            targetPoint = hit.point;
+        }
+        else
+        {
+            targetPoint = ray.GetPoint(1000f);
+        }
+
+        // Dirección de la bala desde la punta del arma hacia el punto objetivo
+        Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
+        if (shootDirection == Vector3.zero) shootDirection = transform.forward;
+
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(shootDirection));
+
+        if (bullet.TryGetComponent<Rigidbody>(out Rigidbody rb))
+        {
+            rb.velocity = shootDirection * bulletSpeed;
+        }
+
+        Destroy(bullet, destroyTime);
+    }
+}
