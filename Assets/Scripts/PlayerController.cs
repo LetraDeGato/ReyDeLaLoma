@@ -23,15 +23,18 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>(); 
 
-        // Detecta automáticamente la Main Camera al arrancar el juego
         if (Camera.main != null)
         {
             mainCamTransform = Camera.main.transform;
         }
         else
         {
-            Debug.LogError("PlayerController: No se encontró la Main Camera. Asegúrate de que tu cámara tenga el Tag 'MainCamera'.");
+            Debug.LogError("PlayerController: No se encontró la Main Camera.");
         }
+
+        // Asegura que el ratón esté bloqueado en el centro para jugar con la cámara
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void Update()
@@ -42,6 +45,13 @@ public class PlayerController : MonoBehaviour
 
         HandleJump();
         UpdateAnimations(); 
+
+        // Opcional: Presionar ESC para liberar el ratón si necesitas revisar el editor
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
     private void FixedUpdate()
@@ -51,19 +61,26 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (mainCamTransform == null) return;
+    if (mainCamTransform == null) return;
 
-        // Calcula el frente y la derecha relativos a la vista de la cámara
-        Vector3 camForward = Vector3.Scale(mainCamTransform.forward, new Vector3(1, 0, 1)).normalized;
-        Vector3 camRight = Vector3.Scale(mainCamTransform.right, new Vector3(1, 0, 1)).normalized;
+    
+    Vector3 camForward = Vector3.Scale(mainCamTransform.forward, new Vector3(1, 0, 1)).normalized;
+    Vector3 camRight = Vector3.Scale(mainCamTransform.right, new Vector3(1, 0, 1)).normalized;
 
-        Vector3 moveDir = (camForward * inputVector.y + camRight * inputVector.x).normalized;
-        float targetSpeed = isRunning ? runSpeed : walkSpeed;
+    Vector3 moveDir = (camForward * inputVector.y + camRight * inputVector.x).normalized;
+    float targetSpeed = isRunning ? runSpeed : walkSpeed;
 
-        Vector3 velocity = moveDir * targetSpeed;
-        rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
+    Vector3 velocity = moveDir * targetSpeed;
+    rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
+
+    
+    if (camForward != Vector3.zero)
+    {
+        
+        Quaternion targetRotation = Quaternion.LookRotation(camForward);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 15f * Time.fixedDeltaTime);
     }
-
+    }   
     private void HandleJump()
     {
         if (Input.GetButtonDown("Jump") && isGrounded)
